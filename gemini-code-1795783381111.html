@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>カイモノ最安値メモ（軽量・高速JAN版）</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --emerald: #059669;
+      --emerald-dark: #047857;
+      --emerald-light: #ecfdf5;
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-top: var(--sat);
+      padding-bottom: calc(74px + var(--sab));
+      overflow-x: hidden;
+    }
+    .num { font-variant-numeric: tabular-nums; }
+    .hidden { display: none !important; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      position: sticky; top: 0; z-index: 30;
+      background: rgba(255,255,255,0.96);
+      border-bottom: 1px solid var(--border);
+    }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 0 12px; }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; padding: 10px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #10b981, #0d9488);
+      color: #fff; display: grid; place-items: center; flex-shrink: 0;
+    }
+    .brand-title { font-size: 16px; font-weight: 900; line-height: 1.2; }
+    .brand-sub { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block; }
+    .dot.ok { background: #10b981; }
+    .dot.err { background: #ef4444; }
+
+    /* Buttons & Inputs */
+    button, input, select, textarea { font-family: inherit; }
+    .btn {
+      border: none; border-radius: 10px; padding: 8px 12px;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--emerald); color: #fff; }
+    .btn-dark { background: #111827; color: #fff; }
+    .btn-soft { background: var(--emerald-light); color: var(--emerald-dark); border: 1px solid #a7f3d0; }
+    .btn-ghost { background: #f3f4f6; color: #374151; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; }
+
+    .input, .select, .textarea {
+      width: 100%; border: 1px solid #d1d5db; background: #f9fafb;
+      border-radius: 10px; padding: 9px 11px; font-size: 14px; color: var(--text);
+      outline: none;
+    }
+    .input:focus, .select:focus, .textarea:focus {
+      background: #fff; border-color: var(--emerald);
+    }
+
+    /* Cards & Sections */
+    main { padding-top: 10px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .stack { display: flex; flex-direction: column; gap: 10px; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    @media (max-width: 540px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* Genre Pills */
+    .pills {
+      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .pills::-webkit-scrollbar { display: none; }
+    .pill {
+      flex-shrink: 0; padding: 6px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 700; border: 1px solid var(--border);
+      background: #fff; color: #4b5563; cursor: pointer;
+    }
+    .pill.active { background: #111827; color: #fff; border-color: #111827; }
+    .pill.active-em { background: var(--emerald); color: #fff; border-color: var(--emerald); }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 8px; padding-top: 8px; margin-top: 8px; border-top: 1px solid #f3f4f6;
+      font-size: 12px;
+    }
+    .seg { display: inline-flex; background: #f3f4f6; padding: 3px; border-radius: 9px; }
+    .seg button {
+      border: none; background: transparent; padding: 5px 8px; border-radius: 7px;
+      font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer;
+    }
+    .seg button.active { background: #fff; color: var(--emerald-dark); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+    /* Product Cards */
+    .prod-list { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .prod-list.grid-view { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    @media (min-width: 640px) {
+      .prod-list.grid-view { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .prod-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 10px; display: flex; gap: 11px; align-items: flex-start; cursor: pointer;
+    }
+    .prod-card.compact { padding: 8px 10px; align-items: center; }
+    .prod-card.grid-card { flex-direction: column; padding: 0; overflow: hidden; gap: 0; }
+    .prod-thumb {
+      width: 68px; height: 68px; border-radius: 10px; object-fit: cover;
+      background: #f3f4f6; flex-shrink: 0; border: 1px solid #f3f4f6;
+    }
+    .prod-card.compact .prod-thumb { width: 44px; height: 44px; border-radius: 8px; }
+    .prod-card.grid-card .prod-thumb { width: 100%; height: 130px; border-radius: 0; border: none; }
+    .prod-body { flex: 1; min-width: 0; width: 100%; }
+    .prod-card.grid-card .prod-body { padding: 10px; }
+    .badge {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 2px 7px; border-radius: 999px; background: #ecfdf5; color: #065f46;
+    }
+    .price-box {
+      margin-top: 6px; padding: 6px 8px; border-radius: 9px;
+      background: #fffbeb; border: 1px solid #fde68a;
+      display: flex; align-items: baseline; justify-content: space-between; gap: 6px; flex-wrap: wrap;
+    }
+    .price-main { font-size: 18px; font-weight: 900; color: #e11d48; }
+    .prod-card.compact .price-main { font-size: 15px; }
+    .price-meta { font-size: 11px; font-weight: 700; color: #374151; }
+    .memo-line {
+      margin-top: 5px; font-size: 11px; color: #4b5563;
+      background: #f9fafb; padding: 4px 7px; border-radius: 7px;
+    }
+
+    /* Visual Gallery */
+    .vis-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .vis-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .vis-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .vis-item {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; cursor: pointer;
+    }
+    .vis-img-wrap { position: relative; aspect-ratio: 1 / 1; background: #f3f4f6; }
+    .vis-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .vis-price {
+      position: absolute; bottom: 5px; left: 5px; right: 5px;
+      background: rgba(17,24,39,0.82); color: #fff; border-radius: 7px;
+      padding: 3px 6px; display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 12px; font-weight: 900;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+      background: rgba(255,255,255,0.97); border-top: 1px solid var(--border);
+      padding: 6px 8px calc(6px + var(--sab));
+    }
+    .nav-grid {
+      max-width: 820px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; align-items: center;
+    }
+    .nav-btn {
+      border: none; background: transparent; color: var(--muted);
+      font-size: 10px; font-weight: 700; padding: 4px 2px; border-radius: 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;
+    }
+    .nav-btn.active { color: var(--emerald); }
+    .nav-reg {
+      background: linear-gradient(135deg, #10b981, #0d9488); color: #fff;
+      border-radius: 12px; padding: 8px 10px; font-size: 12px; font-weight: 900;
+    }
+
+    /* Modal & Toast */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.6);
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    @media (min-width: 640px) { .modal-backdrop { align-items: center; padding: 16px; } }
+    .modal-sheet {
+      background: #fff; width: 100%; max-width: 520px; max-height: 90vh;
+      border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden;
+    }
+    @media (min-width: 640px) { .modal-sheet { border-radius: 20px; } }
+    .modal-head {
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; font-weight: 900;
+    }
+    .modal-body { padding: 14px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .modal-foot {
+      padding: 10px 16px; border-top: 1px solid var(--border); background: #f9fafb;
+      display: flex; gap: 8px;
+    }
+
+    .toast {
+      position: fixed; top: calc(12px + var(--sat)); left: 50%; transform: translateX(-50%);
+      z-index: 100; background: #111827; color: #fff; padding: 10px 14px;
+      border-radius: 12px; font-size: 13px; font-weight: 700; max-width: 92vw;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .scanner-box {
+      background: #111827; color: #fff; border-radius: 12px; padding: 10px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    #jan-reader, #search-jan-reader { width: 100%; border-radius: 10px; overflow: hidden; background: #000; }
+  </style>
+</head>
+<body>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <header>
+    <div class="wrap header-inner">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+        </div>
+        <div style="min-width:0">
+          <div class="brand-title truncate">カイモノ最安値メモ</div>
+          <div class="brand-sub">
+            <span id="sync-dot" class="dot"></span>
+            <span id="room-label" class="truncate">接続中...</span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <button type="button" class="btn btn-soft" onclick="openRegisterModal(true)">JANスキャン</button>
+        <button type="button" class="btn btn-ghost" onclick="switchTab('settings')">共有・ジャンル</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- TAB 1: 最安値一覧 -->
+    <section id="tab-list" class="stack">
+      <div class="card">
+        <div class="row">
+          <input id="search-input" class="input" type="search" oninput="debouncedRender()" placeholder="商品名・店舗・JAN・メモで検索..." />
+          <button type="button" class="btn btn-dark" onclick="openSearchScanner()" title="バーコード検索">JAN検索</button>
+        </div>
+
+        <div id="genre-pills" class="pills" style="margin-top:8px"></div>
+
+        <div class="toolbar">
+          <div class="seg">
+            <button type="button" id="v-compact" onclick="setViewMode('compact')">コンパクト</button>
+            <button type="button" id="v-standard" class="active" onclick="setViewMode('standard')">標準</button>
+            <button type="button" id="v-grid" onclick="setViewMode('grid')">タイル</button>
+          </div>
+          <div class="row" style="gap:6px">
+            <label style="font-size:11px;color:var(--muted)">文字/画像</label>
+            <input id="scale-range" type="range" min="1" max="5" value="3" oninput="setScale(this.value)" style="width:68px" />
+            <select id="sort-select" class="select" onchange="renderProducts()" style="width:auto;padding:5px 8px;font-size:12px;font-weight:700">
+              <option value="recent">新しい順</option>
+              <option value="lowest">最安値順</option>
+              <option value="name">名前順</option>
+              <option value="count">回数順</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="justify-content:space-between;padding:0 2px;font-size:11px;color:var(--muted)">
+        <span id="count-label">0件</span>
+        <span>タップで履歴・最安比較</span>
+      </div>
+
+      <div id="products-container" class="prod-list"></div>
+
+      <div id="empty-state" class="card hidden" style="text-align:center;padding:28px 16px">
+        <div style="font-weight:800;margin-bottom:6px">該当する商品がありません</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">下の「＋登録」からJANコードや商品名を登録しましょう。</div>
+        <button type="button" class="btn btn-primary" onclick="openRegisterModal(false)">商品を登録する</button>
+      </div>
+    </section>
+
+    <!-- TAB 2: 画像検索 -->
+    <section id="tab-visual" class="stack hidden">
+      <div class="card" style="background:linear-gradient(135deg,#4f46e5,#2563eb);color:#fff;border:none">
+        <div style="font-size:11px;font-weight:700;opacity:0.9">売り場での確認に</div>
+        <div style="font-size:17px;font-weight:900;margin-top:2px">パッケージ画像・色味で探す</div>
+        <div style="font-size:12px;opacity:0.9;margin-top:4px">売り場で撮った写真と似た色味の登録商品を上に並べ替えます。</div>
+        <div class="row" style="margin-top:10px">
+          <label class="btn" style="background:#fff;color:#1d4ed8;flex:1;cursor:pointer">
+            <span>売り場の商品を撮影して比較</span>
+            <input type="file" accept="image/*" capture="environment" onchange="onVisualComparePhoto(event)" class="hidden" />
+          </label>
+          <button type="button" id="clear-vis-btn" class="btn hidden" style="background:rgba(255,255,255,0.2);color:#fff" onclick="clearVisualCompare()">解除</button>
+        </div>
+      </div>
+
+      <div id="vis-compare-box" class="card hidden" style="border-color:#4f46e5">
+        <div class="row">
+          <img id="vis-query-img" src="" alt="" style="width:72px;height:72px;border-radius:10px;object-fit:cover;background:#f3f4f6" />
+          <div style="font-size:12px">
+            <div style="font-weight:800;color:#1d4ed8">色味が近い順に並べ替えました</div>
+            <div style="color:var(--muted);margin-top:2px">商品をタップして最安値を確認できます。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <input id="vis-search" class="input" type="search" oninput="renderVisualGallery()" placeholder="画像一覧を絞り込み..." />
+          <select id="vis-cols" class="select" onchange="renderVisualGallery()" style="width:auto;font-size:12px;font-weight:700">
+            <option value="2">2列</option>
+            <option value="3" selected>3列</option>
+            <option value="4">4列</option>
+          </select>
+        </div>
+        <div id="vis-genre-pills" class="pills" style="margin-top:8px"></div>
+      </div>
+
+      <div id="vis-grid" class="vis-grid"></div>
+    </section>
+
+    <!-- TAB 3: 家族共有・ジャンル -->
+    <section id="tab-settings" class="stack hidden">
+      <div class="card stack">
+        <div style="font-weight:900;font-size:15px">家族との共有ルーム</div>
+        <div style="font-size:12px;color:var(--muted)">同じルームIDを使うと、家族間で価格・メモ・ジャンルが同期されます。</div>
+        <div style="background:var(--emerald-light);border:1px solid #a7f3d0;border-radius:12px;padding:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--emerald-dark)">現在のルームID</div>
+          <div class="row" style="margin-top:6px">
+            <code id="room-id-text" class="num" style="flex:1;background:#fff;padding:8px 10px;border-radius:8px;font-weight:800;font-size:13px;border:1px solid #d1fae5" class="truncate">-</code>
+            <button type="button" class="btn btn-primary" onclick="copyRoomId()">コピー</button>
+          </div>
+        </div>
+        <div class="row">
+          <input id="join-room-input" class="input" placeholder="参加するルームID（例: family-12345）" />
+          <button type="button" class="btn btn-dark" onclick="joinRoom()">切替</button>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <div style="font-weight:900;font-size:15px">ジャンル管理</div>
+        <div class="row">
+          <input id="new-genre-name" class="input" placeholder="新しいジャンル名（例: 冷凍食品）" />
+          <button type="button" class="btn btn-primary" onclick="addGenre()">追加</button>
+        </div>
+        <div id="genre-list"></div>
+      </div>
+
+      <div class="card row" style="justify-content:space-between">
+        <div>
+          <div style="font-size:13px;font-weight:800">サンプルデータ投入</div>
+          <div style="font-size:11px;color:var(--muted)">テスト用の商品・価格履歴を追加します</div>
+        </div>
+        <button type="button" class="btn btn-ghost" onclick="seedSamples(false)">追加</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <div class="nav-grid">
+      <button type="button" id="nav-list" class="nav-btn active" onclick="switchTab('list')">
+        <span>最安値一覧</span>
+      </button>
+      <button type="button" id="nav-visual" class="nav-btn" onclick="switchTab('visual')">
+        <span>画像検索</span>
+      </button>
+      <button type="button" class="nav-btn nav-reg" onclick="openRegisterModal(false)">
+        <span>＋ 登録</span>
+      </button>
+      <button type="button" id="nav-settings" class="nav-btn" onclick="switchTab('settings')">
+        <span>共有・ジャンル</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 登録モーダル -->
+  <div id="reg-modal" class="modal-backdrop hidden">
+    <div class="modal-sheet">
+      <div class="modal-head">
+        <span>買い物・価格を登録</span>
+        <button type="button" class="btn btn-ghost" onclick="closeRegisterModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="scanner-box">
+          <div class="row" style="justify-content:space-between">
+            <span style="font-size:12px;font-weight:800;color:#34d399">JANコード読み取り（EAN-13 / EAN-8）</span>
+            <button type="button" id="cam-toggle-btn" class="btn btn-primary" style="padding:6px 10px" onclick="toggleRegScanner()">カメラ起動</button>
+          </div>
+          <div id="jan-reader-wrap" class="hidden">
+            <div id="jan-reader"></div>
+            <div style="font-size:11px;color:#d1d5db;text-align:center;margin-top:4px">バーコードを横長の枠内に水平にかざしてください</div>
+          </div>
+          <div class="row">
+            <input id="reg-jan" class="input num" inputmode="numeric" oninput="onJanTyped(this.value)" placeholder="JANコード（13桁/8桁）" style="background:#1f2937;color:#fff;border-color:#374151" />
+            <button type="button" class="btn btn-ghost" onclick="lookupJan()">照会</button>
+          </div>
+          <div id="jan-hit-msg" class="hidden" style="font-size:11px;background:rgba(16,185,129,0.2);color:#a7f3d0;padding:7px 9px;border-radius:8px"></div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">商品名 *</label>
+            <input id="reg-name" class="input" placeholder="例: おいしい牛乳 900ml" />
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">ジャンル</label>
+            <select id="reg-genre" class="select"></select>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">価格（円） *</label>
+            <input id="reg-price" class="input num" type="number" inputmode="numeric" oninput="updatePriceHint()" placeholder="198" />
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">個数・量 / 単位</label>
+            <div class="row" style="gap:5px">
+              <input id="reg-qty" class="input num" type="number" inputmode="decimal" step="any" value="1" oninput="updatePriceHint()" />
+              <input id="reg-unit" class="input" value="個" style="width:64px;text-align:center" />
+            </div>
+          </div>
+        </div>
+
+        <div id="price-hint" style="font-size:12px;color:#374151;background:#ecfdf5;padding:7px 10px;border-radius:9px;display:flex;justify-content:space-between">
+          <span>単価: <strong id="unit-price-val" class="num">-</strong></span>
+          <span id="deal-val" style="font-weight:800"></span>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">店舗名 *</label>
+            <input id="reg-store" class="input" placeholder="例: イオン、業務スーパー" />
+            <div id="store-chips" class="pills" style="margin-top:5px"></div>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">購入日</label>
+            <input id="reg-date" class="input num" type="date" />
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">商品写真（任意・軽量保存）</label>
+          <div class="row">
+            <label class="btn btn-ghost" style="cursor:pointer">
+              <span>撮影・画像選択</span>
+              <input type="file" accept="image/*" onchange="onPhotoSelected(event)" class="hidden" />
+            </label>
+            <img id="reg-preview" src="" alt="" class="hidden" style="width:44px;height:44px;border-radius:8px;object-fit:cover" />
+            <button type="button" id="reg-photo-del" class="btn btn-danger hidden" onclick="clearPhoto()">削除</button>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">メモ</label>
+          <textarea id="reg-memo" class="textarea" rows="2" placeholder="特売日や家族のメモなど"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" style="flex:1;padding:11px" onclick="closeRegisterModal()">キャンセル</button>
+        <button type="button" class="btn btn-primary" style="flex:2;padding:11px" onclick="saveRecord()">登録する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 詳細・履歴モーダル -->
+  <div id="detail-modal" class="modal-backdrop hidden">
+    <div class="modal-sheet">
+      <div class="modal-head">
+        <span id="detail-badge" class="badge">ジャンル</span>
+        <div class="row">
+          <button type="button" class="btn btn-primary" onclick="addPriceForCurrent()">＋ 今回価格を追加</button>
+          <button type="button" class="btn btn-ghost" onclick="closeDetailModal()">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="row" style="align-items:flex-start;gap:12px">
+          <img id="detail-img" src="" alt="" style="width:80px;height:80px;border-radius:12px;object-fit:cover;background:#f3f4f6;flex-shrink:0" />
+          <div style="flex:1;min-width:0">
+            <div id="detail-name" style="font-size:16px;font-weight:900;line-height:1.3"></div>
+            <div id="detail-jan" class="num" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+            <div style="margin-top:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px">
+              <div style="font-size:10px;font-weight:800;color:#b45309">これまでの最安値</div>
+              <div class="row" style="gap:6px;margin-top:2px">
+                <span id="detail-low-price" class="num" style="font-size:18px;font-weight:900;color:#e11d48">¥0</span>
+                <span id="detail-low-unit" class="num" style="font-size:11px;color:#4b5563"></span>
+              </div>
+              <div id="detail-low-meta" style="font-size:11px;font-weight:700;color:#374151;margin-top:2px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="row" style="justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:800">商品メモ</span>
+            <button type="button" class="btn btn-soft" style="padding:4px 8px;font-size:11px" onclick="saveMemo()">メモ保存</button>
+          </div>
+          <textarea id="detail-memo" class="textarea" rows="2"></textarea>
+        </div>
+
+        <div>
+          <div style="font-size:12px;font-weight:800;margin-bottom:6px">購入履歴（<span id="detail-count" class="num">0</span>件）</div>
+          <div id="detail-history" class="stack" style="gap:6px"></div>
+        </div>
+      </div>
+      <div class="modal-foot" style="justify-content:space-between">
+        <button type="button" class="btn btn-danger" onclick="deleteProduct()">商品削除</button>
+        <button type="button" class="btn btn-dark" onclick="closeDetailModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- バーコード検索モーダル -->
+  <div id="search-scan-modal" class="modal-backdrop hidden">
+    <div class="modal-sheet" style="max-height:75vh">
+      <div class="modal-head">
+        <span>JANコードで最安値を検索</span>
+        <button type="button" class="btn btn-ghost" onclick="closeSearchScanner()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="search-jan-reader"></div>
+        <div style="font-size:12px;color:var(--muted);text-align:center">商品のJANバーコードを枠内に映してください</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'kaimono-memo-lite';
+    let db = null, user = null, roomId = '';
+    let unsubRec = null, unsubGen = null;
+
+    let records = [];
+    let products = [];
+    let genres = [
+      { id: 'food', name: '食品' },
+      { id: 'drink', name: '飲料' },
+      { id: 'daily', name: '日用品' },
+      { id: 'drug', name: 'ドラッグ' },
+      { id: 'snack', name: 'お菓子' },
+      { id: 'other', name: 'その他' }
+    ];
+
+    let genreFilter = 'ALL';
+    let visGenreFilter = 'ALL';
+    let viewMode = 'standard';
+    let cardScale = 3;
+    let activeProductKey = null;
+    let photoData = '';
+    let photoRgb = null;
+    let visTargetRgb = null;
+
+    let regScanner = null;
+    let searchScanner = null;
+    let renderTimer = null;
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+
+    function placeholderImg(name) {
+      const ch = esc((name || '商').trim().charAt(0));
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><rect width="160" height="160" fill="#f3f4f6"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="56" fill="#9ca3af">${ch}</text></svg>`;
+      return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+    }
+
+    function toast(msg, isErr = false) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.style.background = isErr ? '#991b1b' : '#111827';
+      el.classList.remove('hidden');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.add('hidden'), 2600);
+    }
+
+    function initRoom() {
+      const h = location.hash.replace('#room=', '').trim();
+      roomId = h.length >= 3 ? h : `family-${Math.floor(10000 + Math.random() * 90000)}`;
+      if (!h) location.hash = `room=${roomId}`;
+      document.getElementById('room-label').textContent = `ルーム: ${roomId}`;
+      document.getElementById('room-id-text').textContent = roomId;
+    }
+
+    async function initCloud() {
+      const dot = document.getElementById('sync-dot');
+      try {
+        if (typeof __firebase_config === 'undefined') throw new Error('no config');
+        const app = initializeApp(JSON.parse(__firebase_config));
+        db = getFirestore(app);
+        const auth = getAuth(app);
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+        user = auth.currentUser;
+        dot.className = 'dot ok';
+        subscribeRoom();
+      } catch (e) {
+        dot.className = 'dot err';
+        document.getElementById('room-label').textContent = 'オフライン表示';
+        seedSamples(true, true);
+      }
+    }
+
+    function subscribeRoom() {
+      if (!db || !user || !roomId) return;
+      if (unsubRec) unsubRec();
+      if (unsubGen) unsubGen();
+
+      const recCol = collection(db, 'artifacts', appId, 'public', 'data', `room_${roomId}_records`);
+      const genCol = collection(db, 'artifacts', appId, 'public', 'data', `room_${roomId}_genres`);
+
+      unsubGen = onSnapshot(genCol, async (snap) => {
+        if (snap.empty) {
+          for (const g of genres) {
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', `room_${roomId}_genres`, g.id), g);
+          }
+        } else {
+          genres = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          renderGenres();
+          renderProducts();
+          renderVisualGallery();
+        }
+      });
+
+      let initial = true;
+      unsubRec = onSnapshot(recCol, async (snap) => {
+        records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (initial && records.length === 0 && !sessionStorage.getItem(`init_${roomId}`)) {
+          initial = false;
+          sessionStorage.setItem(`init_${roomId}`, '1');
+          await seedSamples(true, false);
+          return;
+        }
+        initial = false;
+        rebuildProducts();
+        renderProducts();
+        renderVisualGallery();
+        renderStoreChips();
+        if (activeProductKey) openDetail(activeProductKey, true);
+      });
+    }
+
+    function rebuildProducts() {
+      const map = new Map();
+      for (const r of records) {
+        const jan = (r.jan || '').trim();
+        const name = (r.name || '名称未設定').trim();
+        const key = jan ? `JAN_${jan}` : `NAME_${name.toLowerCase()}`;
+        const price = Number(r.price) || 0;
+        const qty = Number(r.qty) || 1;
+        const unitPrice = qty > 0 ? price / qty : price;
+
+        if (!map.has(key)) {
+          map.set(key, {
+            key, jan, name,
+            genreId: r.genreId || 'other',
+            photo: r.photo || '',
+            rgb: r.rgb || null,
+            memo: r.memo || '',
+            items: []
+          });
+        }
+        const p = map.get(key);
+        if (r.photo) p.photo = r.photo;
+        if (r.rgb) p.rgb = r.rgb;
+        if (r.genreId) p.genreId = r.genreId;
+        if (r.memo) p.memo = r.memo;
+        if (r.name) p.name = r.name;
+        p.items.push({ ...r, price, qty, unitPrice });
+      }
+
+      products = Array.from(map.values()).map(p => {
+        p.items.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
+        p.lowest = p.items.reduce((m, c) => c.price < m.price ? c : m, p.items[0]);
+        p.lowestUnit = p.items.reduce((m, c) => c.unitPrice < m.unitPrice ? c : m, p.items[0]);
+        return p;
+      });
+    }
+
+    function renderGenres() {
+      const pills = document.getElementById('genre-pills');
+      pills.innerHTML = `<button type="button" class="pill ${genreFilter==='ALL'?'active':''}" onclick="setGenreFilter('ALL')">すべて</button>` +
+        genres.map(g => `<button type="button" class="pill ${genreFilter===g.id?'active-em':''}" onclick="setGenreFilter('${g.id}')">${esc(g.name)}</button>`).join('');
+
+      const vPills = document.getElementById('vis-genre-pills');
+      vPills.innerHTML = `<button type="button" class="pill ${visGenreFilter==='ALL'?'active':''}" onclick="setVisGenreFilter('ALL')">すべて</button>` +
+        genres.map(g => `<button type="button" class="pill ${visGenreFilter===g.id?'active-em':''}" onclick="setVisGenreFilter('${g.id}')">${esc(g.name)}</button>`).join('');
+
+      const sel = document.getElementById('reg-genre');
+      const cur = sel.value;
+      sel.innerHTML = genres.map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
+      if (cur && genres.some(g => g.id === cur)) sel.value = cur;
+
+      const list = document.getElementById('genre-list');
+      list.innerHTML = genres.map(g => `
+        <div class="row" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid #f3f4f6">
+          <span class="badge">${esc(g.name)}</span>
+          ${g.id !== 'other' ? `<button type="button" class="btn btn-danger" style="padding:4px 8px" onclick="delGenre('${g.id}')">削除</button>` : ''}
+        </div>
+      `).join('');
+    }
+
+    window.debouncedRender = function() {
+      clearTimeout(renderTimer);
+      renderTimer = setTimeout(renderProducts, 80);
+    };
+
+    window.renderProducts = function() {
+      const q = document.getElementById('search-input').value.trim().toLowerCase();
+      const sort = document.getElementById('sort-select').value;
+      const container = document.getElementById('products-container');
+      const empty = document.getElementById('empty-state');
+
+      ['compact', 'standard', 'grid'].forEach(m => {
+        document.getElementById(`v-${m}`).classList.toggle('active', viewMode === m);
+      });
+
+      let list = products.filter(p => {
+        if (genreFilter !== 'ALL' && p.genreId !== genreFilter) return false;
+        if (!q) return true;
+        return p.name.toLowerCase().includes(q) ||
+          p.jan.includes(q) ||
+          p.memo.toLowerCase().includes(q) ||
+          p.items.some(i => (i.store || '').toLowerCase().includes(q));
+      });
+
+      if (sort === 'lowest') list.sort((a, b) => a.lowest.price - b.lowest.price);
+      else if (sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+      else if (sort === 'count') list.sort((a, b) => b.items.length - a.items.length);
+      else list.sort((a, b) => (b.items[0]?.date || '').localeCompare(a.items[0]?.date || '') || (b.items[0]?.createdAt || 0) - (a.items[0]?.createdAt || 0));
+
+      document.getElementById('count-label').textContent = `商品: ${list.length}件（履歴 ${records.length}件）`;
+
+      if (!list.length) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      const fontScale = [0.85, 0.92, 1, 1.12, 1.25][cardScale - 1] || 1;
+      container.className = `prod-list ${viewMode === 'grid' ? 'grid-view' : ''}`;
+
+      container.innerHTML = list.map(p => {
+        const gName = genres.find(g => g.id === p.genreId)?.name || 'その他';
+        const img = p.photo || placeholderImg(p.name);
+        const low = p.lowest;
+        const unitExtra = (p.lowestUnit.qty > 1 || (p.lowestUnit.unit && p.lowestUnit.unit !== '個'))
+          ? ` (1${esc(p.lowestUnit.unit || '個')} ¥${Math.round(p.lowestUnit.unitPrice * 10) / 10})`
+          : '';
+
+        if (viewMode === 'compact') {
+          return `<div class="prod-card compact" onclick="openDetail('${p.key}')">
+            <img class="prod-thumb" src="${img}" alt="" loading="lazy" />
+            <div class="prod-body">
+              <div class="row" style="gap:6px"><span class="badge">${esc(gName)}</span><span style="font-size:${Math.round(13*fontScale)}px;font-weight:800" class="truncate">${esc(p.name)}</span></div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" class="truncate">${esc(low.store)}・${esc(low.date || '')}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:10px;color:#b45309;font-weight:800">最安</div>
+              <div class="price-main num" style="font-size:${Math.round(15*fontScale)}px">¥${low.price.toLocaleString()}</div>
+            </div>
+          </div>`;
+        }
+
+        if (viewMode === 'grid') {
+          return `<div class="prod-card grid-card" onclick="openDetail('${p.key}')">
+            <img class="prod-thumb" src="${img}" alt="" loading="lazy" />
+            <div class="prod-body">
+              <span class="badge">${esc(gName)}</span>
+              <div style="font-size:${Math.round(13*fontScale)}px;font-weight:800;margin-top:4px" class="line-clamp-2">${esc(p.name)}</div>
+              <div class="price-box">
+                <span class="price-main num" style="font-size:${Math.round(16*fontScale)}px">¥${low.price.toLocaleString()}</span>
+                <span class="price-meta truncate">${esc(low.store)}</span>
+              </div>
+            </div>
+          </div>`;
+        }
+
+        return `<div class="prod-card" onclick="openDetail('${p.key}')">
+          <img class="prod-thumb" src="${img}" alt="" loading="lazy" />
+          <div class="prod-body">
+            <div class="row" style="justify-content:space-between">
+              <span class="badge">${esc(gName)}</span>
+              <span class="num" style="font-size:11px;color:var(--muted)">${p.items.length}回記録</span>
+            </div>
+            <div style="font-size:${Math.round(14*fontScale)}px;font-weight:900;margin-top:4px" class="line-clamp-2">${esc(p.name)}</div>
+            <div class="price-box">
+              <div>
+                <span style="font-size:10px;font-weight:900;background:#f59e0b;color:#fff;padding:1px 5px;border-radius:5px;margin-right:4px">最安</span>
+                <span class="price-main num" style="font-size:${Math.round(18*fontScale)}px">¥${low.price.toLocaleString()}</span>
+                <span class="num" style="font-size:11px;color:#4b5563">${unitExtra}</span>
+              </div>
+              <span class="price-meta">${esc(low.store)} <span style="color:#9ca3af;font-weight:400">${esc(low.date || '')}</span></span>
+            </div>
+            ${p.memo ? `<div class="memo-line truncate">📝 ${esc(p.memo)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    };
+
+    window.renderVisualGallery = function() {
+      const q = document.getElementById('vis-search').value.trim().toLowerCase();
+      const cols = document.getElementById('vis-cols').value;
+      const grid = document.getElementById('vis-grid');
+      grid.className = `vis-grid cols-${cols}`;
+
+      let list = products.filter(p => {
+        if (visGenreFilter !== 'ALL' && p.genreId !== visGenreFilter) return false;
+        if (q && !p.name.toLowerCase().includes(q) && !p.memo.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      if (visTargetRgb) {
+        list = [...list].sort((a, b) => rgbDist(visTargetRgb, a.rgb) - rgbDist(visTargetRgb, b.rgb));
+      }
+
+      grid.innerHTML = list.map(p => `<div class="vis-item" onclick="openDetail('${p.key}')">
+        <div class="vis-img-wrap">
+          <img src="${p.photo || placeholderImg(p.name)}" alt="" loading="lazy" />
+          <div class="vis-price num"><span>最安</span><span>¥${p.lowest.price.toLocaleString()}</span></div>
+        </div>
+        <div style="padding:6px">
+          <div style="font-size:11px;font-weight:800" class="line-clamp-2">${esc(p.name)}</div>
+          <div style="font-size:10px;color:var(--emerald-dark);font-weight:700;margin-top:2px" class="truncate">${esc(p.lowest.store)}</div>
+        </div>
+      </div>`).join('') || `<div class="card" style="grid-column:1/-1;text-align:center;font-size:12px;color:var(--muted)">商品がありません</div>`;
+    };
+
+    function rgbDist(a, b) {
+      if (!a || !b) return 999999;
+      return (a.r - b.r)**2 + (a.g - b.g)**2 + (a.b - b.b)**2;
+    }
+
+    function analyzeImage(file, maxPx = 320) {
+      return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width, h = img.height;
+            if (w > h && w > maxPx) { h = Math.round(h * maxPx / w); w = maxPx; }
+            else if (h >= w && h > maxPx) { w = Math.round(w * maxPx / h); h = maxPx; }
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const data = ctx.getImageData(Math.floor(w*0.2), Math.floor(h*0.2), Math.max(1, Math.floor(w*0.6)), Math.max(1, Math.floor(h*0.6))).data;
+            let r=0, g=0, b=0, n=0;
+            for (let i=0; i<data.length; i+=16) { r+=data[i]; g+=data[i+1]; b+=data[i+2]; n++; }
+            resolve({
+              url: c.toDataURL('image/jpeg', 0.65),
+              rgb: n ? { r: Math.round(r/n), g: Math.round(g/n), b: Math.round(b/n) } : null
+            });
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    window.onVisualComparePhoto = async function(ev) {
+      const f = ev.target.files?.[0];
+      if (!f) return;
+      const res = await analyzeImage(f, 320);
+      visTargetRgb = res.rgb;
+      document.getElementById('vis-query-img').src = res.url;
+      document.getElementById('vis-compare-box').classList.remove('hidden');
+      document.getElementById('clear-vis-btn').classList.remove('hidden');
+      renderVisualGallery();
+      toast('色味が近い順に並べ替えました');
+    };
+
+    window.clearVisualCompare = function() {
+      visTargetRgb = null;
+      document.getElementById('vis-compare-box').classList.add('hidden');
+      document.getElementById('clear-vis-btn').classList.add('hidden');
+      renderVisualGallery();
+    };
+
+    // JAN スキャナー（EAN-13 / EAN-8 / UPC 最適化）
+    function makeScannerConfig() {
+      const formats = [];
+      if (window.Html5QrcodeSupportedFormats) {
+        formats.push(
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E
+        );
+      }
+      return {
+        fps: 15,
+        qrbox: { width: 280, height: 110 },
+        formatsToSupport: formats.length ? formats : undefined,
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+      };
+    }
+
+    async function stopScannerInstance(inst) {
+      if (!inst) return;
+      try { if (inst.isScanning) await inst.stop(); } catch (_) {}
+      try { await inst.clear(); } catch (_) {}
+    }
+
+    window.toggleRegScanner = async function() {
+      const wrap = document.getElementById('jan-reader-wrap');
+      const btn = document.getElementById('cam-toggle-btn');
+      if (regScanner) {
+        await stopScannerInstance(regScanner);
+        regScanner = null;
+        wrap.classList.add('hidden');
+        btn.textContent = 'カメラ起動';
+        return;
+      }
+      wrap.classList.remove('hidden');
+      btn.textContent = '停止';
+      try {
+        regScanner = new Html5Qrcode('jan-reader');
+        await regScanner.start(
+          { facingMode: { ideal: 'environment' } },
+          makeScannerConfig(),
+          async (code) => {
+            if (navigator.vibrate) navigator.vibrate(80);
+            document.getElementById('reg-jan').value = code;
+            onJanTyped(code);
+            toast(`JAN読取: ${code}`);
+            await stopScannerInstance(regScanner);
+            regScanner = null;
+            wrap.classList.add('hidden');
+            btn.textContent = 'カメラ起動';
+          },
+          () => {}
+        );
+      } catch (e) {
+        toast('カメラ起動に失敗しました（HTTPS・カメラ許可を確認してください）', true);
+        regScanner = null;
+        wrap.classList.add('hidden');
+        btn.textContent = 'カメラ起動';
+      }
+    };
+
+    window.openSearchScanner = async function() {
+      document.getElementById('search-scan-modal').classList.remove('hidden');
+      try {
+        searchScanner = new Html5Qrcode('search-jan-reader');
+        await searchScanner.start(
+          { facingMode: { ideal: 'environment' } },
+          makeScannerConfig(),
+          async (code) => {
+            if (navigator.vibrate) navigator.vibrate(80);
+            await closeSearchScanner();
+            const hit = products.find(p => p.jan === code);
+            if (hit) {
+              switchTab('list');
+              openDetail(hit.key);
+              toast(`「${hit.name}」を表示しました`);
+            } else {
+              switchTab('list');
+              document.getElementById('search-input').value = code;
+              renderProducts();
+              toast(`未登録JAN: ${code}`);
+            }
+          },
+          () => {}
+        );
+      } catch (e) {
+        toast('カメラを起動できませんでした', true);
+        await closeSearchScanner();
+      }
+    };
+
+    window.closeSearchScanner = async function() {
+      await stopScannerInstance(searchScanner);
+      searchScanner = null;
+      document.getElementById('search-scan-modal').classList.add('hidden');
+    };
+
+    window.onJanTyped = function(val) {
+      const code = (val || '').trim();
+      const box = document.getElementById('jan-hit-msg');
+      if (!code) { box.classList.add('hidden'); return; }
+      const hit = products.find(p => p.jan === code);
+      if (hit) {
+        document.getElementById('reg-name').value = hit.name;
+        document.getElementById('reg-genre').value = hit.genreId;
+        if (hit.memo) document.getElementById('reg-memo').value = hit.memo;
+        if (hit.photo) {
+          photoData = hit.photo; photoRgb = hit.rgb || null;
+          const prev = document.getElementById('reg-preview');
+          prev.src = hit.photo; prev.classList.remove('hidden');
+          document.getElementById('reg-photo-del').classList.remove('hidden');
+        }
+        box.textContent = `登録済みを自動入力：「${hit.name}」（最安 ¥${hit.lowest.price}）`;
+        box.classList.remove('hidden');
+        updatePriceHint();
+      } else {
+        box.classList.add('hidden');
+      }
+    };
+
+    window.lookupJan = function() {
+      const code = document.getElementById('reg-jan').value.trim();
+      if (!code) return toast('JANコードを入力してください', true);
+      onJanTyped(code);
+      if (!products.some(p => p.jan === code)) toast('未登録のJANコードです。商品名を入力してください。');
+    };
+
+    window.openRegisterModal = function(startCam = false, prefill = null) {
+      document.getElementById('reg-modal').classList.remove('hidden');
+      document.getElementById('reg-date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('reg-price').value = '';
+      document.getElementById('reg-qty').value = '1';
+      document.getElementById('reg-unit').value = '個';
+      document.getElementById('jan-hit-msg').classList.add('hidden');
+      document.getElementById('unit-price-val').textContent = '-';
+      document.getElementById('deal-val').textContent = '';
+
+      if (prefill) {
+        document.getElementById('reg-jan').value = prefill.jan || '';
+        document.getElementById('reg-name').value = prefill.name || '';
+        document.getElementById('reg-genre').value = prefill.genreId || 'other';
+        document.getElementById('reg-memo').value = prefill.memo || '';
+        if (prefill.photo) {
+          photoData = prefill.photo; photoRgb = prefill.rgb || null;
+          document.getElementById('reg-preview').src = prefill.photo;
+          document.getElementById('reg-preview').classList.remove('hidden');
+          document.getElementById('reg-photo-del').classList.remove('hidden');
+        } else clearPhoto();
+      } else {
+        document.getElementById('reg-jan').value = '';
+        document.getElementById('reg-name').value = '';
+        document.getElementById('reg-memo').value = '';
+        clearPhoto();
+      }
+      renderStoreChips();
+      if (startCam) setTimeout(() => { if (!regScanner) toggleRegScanner(); }, 180);
+    };
+
+    window.closeRegisterModal = async function() {
+      if (regScanner) await toggleRegScanner();
+      document.getElementById('reg-modal').classList.add('hidden');
+    };
+
+    window.updatePriceHint = function() {
+      const price = Number(document.getElementById('reg-price').value);
+      const qty = Number(document.getElementById('reg-qty').value) || 1;
+      const unit = document.getElementById('reg-unit').value || '個';
+      const jan = document.getElementById('reg-jan').value.trim();
+      const name = document.getElementById('reg-name').value.trim();
+
+      if (!price || price <= 0) {
+        document.getElementById('unit-price-val').textContent = '-';
+        document.getElementById('deal-val').textContent = '';
+        return;
+      }
+      document.getElementById('unit-price-val').textContent = `¥${Math.round((price / qty) * 10) / 10} / ${unit}`;
+
+      const key = jan ? `JAN_${jan}` : (name ? `NAME_${name.toLowerCase()}` : null);
+      const hit = key ? products.find(p => p.key === key) : null;
+      const deal = document.getElementById('deal-val');
+      if (!hit) { deal.textContent = ''; return; }
+      const low = hit.lowest.price;
+      if (price < low) { deal.style.color = '#e11d48'; deal.textContent = `最安値更新！（前最安 ¥${low}）`; }
+      else if (price === low) { deal.style.color = '#b45309'; deal.textContent = `過去最安タイ（¥${low}）`; }
+      else { deal.style.color = '#6b7280'; deal.textContent = `最安より +¥${price - low}`; }
+    };
+
+    window.onPhotoSelected = async function(ev) {
+      const f = ev.target.files?.[0];
+      if (!f) return;
+      const res = await analyzeImage(f, 320);
+      photoData = res.url; photoRgb = res.rgb;
+      const prev = document.getElementById('reg-preview');
+      prev.src = photoData; prev.classList.remove('hidden');
+      document.getElementById('reg-photo-del').classList.remove('hidden');
+    };
+
+    window.clearPhoto = function() {
+      photoData = ''; photoRgb = null;
+      const prev = document.getElementById('reg-preview');
+      prev.src = ''; prev.classList.add('hidden');
+      document.getElementById('reg-photo-del').classList.add('hidden');
+    };
+
+    function renderStoreChips() {
+      const stores = [...new Set(records.map(r => r.store).filter(Boolean))].slice(0, 5);
+      document.getElementById('store-chips').innerHTML = stores.map(s =>
+        `<button type="button" class="pill" style="padding:3px 8px;font-size:11px" onclick="document.getElementById('reg-store').value='${esc(s)}'">${esc(s)}</button>`
+      ).join('');
+    }
+
+    window.saveRecord = async function() {
+      const jan = document.getElementById('reg-jan').value.trim();
+      const name = document.getElementById('reg-name').value.trim();
+      const genreId = document.getElementById('reg-genre').value || 'other';
+      const price = Number(document.getElementById('reg-price').value);
+      const qty = Number(document.getElementById('reg-qty').value) || 1;
+      const unit = document.getElementById('reg-unit').value.trim() || '個';
+      const store = document.getElementById('reg-store').value.trim() || '店舗未指定';
+      const date = document.getElementById('reg-date').value || new Date().toISOString().slice(0, 10);
+      const memo = document.getElementById('reg-memo').value.trim();
+
+      if (!name) return toast('商品名を入力してください', true);
+      if (!price || price <= 0) return toast('価格を入力してください', true);
+
+      const item = { jan, name, genreId, price, qty, unit, store, date, memo, photo: photoData, rgb: photoRgb, createdAt: Date.now() };
+
+      if (db && user) {
+        const col = collection(db, 'artifacts', appId, 'public', 'data', `room_${roomId}_records`);
+        await addDoc(col, item);
+      } else {
+        records.unshift({ id: String(Date.now()), ...item });
+        rebuildProducts(); renderProducts(); renderVisualGallery();
+      }
+      toast(`「${name}」を登録しました`);
+      closeRegisterModal();
+    };
+
+    window.openDetail = function(key, isRefresh = false) {
+      const p = products.find(x => x.key === key);
+      if (!p) { if (!isRefresh) toast('商品が見つかりません', true); closeDetailModal(); return; }
+      activeProductKey = key;
+
+      document.getElementById('detail-badge').textContent = genres.find(g => g.id === p.genreId)?.name || 'その他';
+      document.getElementById('detail-img').src = p.photo || placeholderImg(p.name);
+      document.getElementById('detail-name').textContent = p.name;
+      document.getElementById('detail-jan').textContent = p.jan ? `JAN: ${p.jan}` : 'JAN未登録';
+      document.getElementById('detail-low-price').textContent = `¥${p.lowest.price.toLocaleString()}`;
+      document.getElementById('detail-low-unit').textContent = `(1${p.lowestUnit.unit || '個'} ¥${Math.round(p.lowestUnit.unitPrice * 10) / 10})`;
+      document.getElementById('detail-low-meta').textContent = `${p.lowest.store} • ${p.lowest.date || ''}`;
+      if (!isRefresh) document.getElementById('detail-memo').value = p.memo || '';
+      document.getElementById('detail-count').textContent = p.items.length;
+
+      document.getElementById('detail-history').innerHTML = p.items.map(r => {
+        const isLow = r.id === p.lowest.id;
+        return `<div style="border:1px solid ${isLow?'#fcd34d':'#e5e7eb'};background:${isLow?'#fffbeb':'#fff'};border-radius:10px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <div>
+            <div style="font-size:13px;font-weight:800">${isLow?'<span style="background:#f59e0b;color:#fff;font-size:10px;padding:1px 5px;border-radius:4px;margin-right:4px">最安</span>':''}${esc(r.store)} <span class="num" style="font-size:11px;color:var(--muted);font-weight:400">${esc(r.date || '')}</span></div>
+            <div class="num" style="font-size:11px;color:var(--muted)">${r.qty}${esc(r.unit || '個')}（単価 ¥${Math.round(r.unitPrice * 10) / 10}）</div>
+          </div>
+          <div class="row">
+            <span class="num" style="font-size:15px;font-weight:900;color:${isLow?'#e11d48':'#111827'}">¥${r.price.toLocaleString()}</span>
+            <button type="button" class="btn btn-danger" style="padding:4px 7px" onclick="delItem('${r.id}')">削除</button>
+          </div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('detail-modal').classList.remove('hidden');
+    };
+
+    window.closeDetailModal = function() {
+      activeProductKey = null;
+      document.getElementById('detail-modal').classList.add('hidden');
+    };
+
+    window.addPriceForCurrent = function() {
+      const p = products.find(x => x.key === activeProductKey);
+      closeDetailModal();
+      if (p) openRegisterModal(false, p);
+    };
+
+    window.saveMemo = async function() {
+      const p = products.find(x => x.key === activeProductKey);
+      if (!p) return;
+      const memo = document.getElementById('detail-memo').value.trim();
+      if (db && user) {
+        for (const r of p.items) {
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', `room_${roomId}_records`, r.id), { memo });
+        }
+      } else {
+        records.forEach(r => { if (p.items.some(i => i.id === r.id)) r.memo = memo; });
+        rebuildProducts(); renderProducts();
+      }
+      toast('メモを保存しました');
+    };
+
+    window.delItem = async function(id) {
+      if (db && user) {
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `room_${roomId}_records`, id));
+      } else {
+        records = records.filter(r => r.id !== id);
+        rebuildProducts(); renderProducts(); renderVisualGallery();
+        if (activeProductKey) openDetail(activeProductKey, true);
+      }
+      toast('履歴を削除しました');
+    };
+
+    window.deleteProduct = async function() {
+      const p = products.find(x => x.key === activeProductKey);
+      if (!p) return;
+      if (db && user) {
+        for (const r of p.items) {
+          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `room_${roomId}_records`, r.id));
+        }
+      } else {
+        const ids = new Set(p.items.map(i => i.id));
+        records = records.filter(r => !ids.has(r.id));
+        rebuildProducts(); renderProducts(); renderVisualGallery();
+      }
+      closeDetailModal();
+      toast('商品を削除しました');
+    };
+
+    window.addGenre = async function() {
+      const inp = document.getElementById('new-genre-name');
+      const name = inp.value.trim();
+      if (!name) return toast('ジャンル名を入力してください', true);
+      const g = { id: `g_${Date.now()}`, name };
+      if (db && user) {
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', `room_${roomId}_genres`, g.id), g);
+      } else {
+        genres.push(g); renderGenres();
+      }
+      inp.value = '';
+      toast(`「${name}」を追加しました`);
+    };
+
+    window.delGenre = async function(id) {
+      if (db && user) {
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `room_${roomId}_genres`, id));
+      } else {
+        genres = genres.filter(g => g.id !== id); renderGenres();
+      }
+      if (genreFilter === id) genreFilter = 'ALL';
+      toast('ジャンルを削除しました');
+    };
+
+    window.copyRoomId = function() {
+      navigator.clipboard?.writeText(roomId).catch(() => {});
+      toast(`ルームID「${roomId}」をコピーしました`);
+    };
+
+    window.joinRoom = function() {
+      const val = document.getElementById('join-room-input').value.trim();
+      if (val.length < 3) return toast('3文字以上のルームIDを入力してください', true);
+      roomId = val;
+      location.hash = `room=${roomId}`;
+      document.getElementById('room-label').textContent = `ルーム: ${roomId}`;
+      document.getElementById('room-id-text').textContent = roomId;
+      document.getElementById('join-room-input').value = '';
+      subscribeRoom();
+      toast(`ルーム「${roomId}」に切り替えました`);
+    };
+
+    window.switchTab = function(tab) {
+      ['list', 'visual', 'settings'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+        document.getElementById(`nav-${t}`)?.classList.toggle('active', t === tab);
+      });
+      window.scrollTo(0, 0);
+    };
+
+    window.setGenreFilter = function(id) { genreFilter = id; renderGenres(); renderProducts(); };
+    window.setVisGenreFilter = function(id) { visGenreFilter = id; renderGenres(); renderVisualGallery(); };
+    window.setViewMode = function(m) { viewMode = m; renderProducts(); };
+    window.setScale = function(v) { cardScale = Number(v); renderProducts(); };
+
+    window.seedSamples = async function(silent = false, localOnly = false) {
+      const today = new Date().toISOString().slice(0, 10);
+      const list = [
+        { jan: '4902705123456', name: 'おいしい牛乳 900ml', genreId: 'drink', price: 238, qty: 1, unit: '本', store: 'オーケー', date: today, memo: '240円以下なら買い', photo: '', rgb: {r:2,g:132,b:199}, createdAt: Date.now() - 1000 },
+        { jan: '4901301345678', name: '洗濯洗剤 詰替 特大', genreId: 'daily', price: 328, qty: 1, unit: '袋', store: 'ドラッグストア', date: today, memo: '特売日狙い', photo: '', rgb: {r:22,g:163,b:74}, createdAt: Date.now() - 2000 },
+        { jan: '4902102987654', name: 'ミックスナッツ 850g', genreId: 'snack', price: 1280, qty: 850, unit: 'g', store: '業務スーパー', date: today, memo: '大容量でお得', photo: '', rgb: {r:217,g:119,b:6}, createdAt: Date.now() - 3000 }
+      ];
+      if (!localOnly && db && user) {
+        const col = collection(db, 'artifacts', appId, 'public', 'data', `room_${roomId}_records`);
+        for (const item of list) await addDoc(col, item);
+      } else {
+        records = [...list.map((x, idx) => ({ id: 's_' + idx, ...x })), ...records];
+        rebuildProducts(); renderProducts(); renderVisualGallery();
+      }
+      if (!silent) toast('サンプルを追加しました');
+    };
+
+    initRoom();
+    renderGenres();
+    initCloud();
+  </script>
+</body>
+</html>
